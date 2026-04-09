@@ -42,7 +42,7 @@ async def _get_user_from_cookie(request: Request, db: AsyncSession):
 
 @router.get("/login", response_class=HTMLResponse)
 async def login_page(request: Request) -> HTMLResponse:
-    return templates.TemplateResponse("login.html", {"request": request})
+    return templates.TemplateResponse(request, "login.html")
 
 
 @router.post("/login")
@@ -55,7 +55,7 @@ async def login_submit(
     user = await authenticate_user(db, username, password)
     if user is None:
         return templates.TemplateResponse(
-            "login.html", {"request": request, "error": "사용자명 또는 비밀번호가 올바르지 않습니다."}
+            request, "login.html", {"error": "사용자명 또는 비밀번호가 올바르지 않습니다."}
         )
 
     access_token = create_access_token(user.user_id, user.role)
@@ -75,7 +75,7 @@ async def index_page(
     if user is None:
         return RedirectResponse(url="/login", status_code=status.HTTP_302_FOUND)
 
-    return templates.TemplateResponse("search.html", {"request": request, "user": user})
+    return templates.TemplateResponse(request, "search.html", {"user": user})
 
 
 @router.get("/search", response_class=HTMLResponse)
@@ -92,8 +92,7 @@ async def search_page(
     if user is None:
         return RedirectResponse(url="/login", status_code=status.HTTP_302_FOUND)
 
-    context = {
-        "request": request,
+    context: dict = {
         "user": user,
         "query": q,
         "page": page,
@@ -122,9 +121,9 @@ async def search_page(
 
     # HTMX 요청이면 partial만 반환
     if request.headers.get("HX-Request"):
-        return templates.TemplateResponse("results.html", context)
+        return templates.TemplateResponse(request, "results.html", context)
 
-    return templates.TemplateResponse("search.html", context)
+    return templates.TemplateResponse(request, "search.html", context)
 
 
 @router.get("/document/{doc_id}", response_class=HTMLResponse)
@@ -144,7 +143,7 @@ async def document_detail_page(
         raise HTTPException(status_code=404, detail="Document not found")
 
     return templates.TemplateResponse(
-        "document_detail.html", {"request": request, "user": user, "document": document}
+        request, "document_detail.html", {"user": user, "document": document}
     )
 
 
@@ -186,7 +185,7 @@ async def admin_dashboard(
     }
 
     return templates.TemplateResponse(
-        "admin/dashboard.html", {"request": request, "user": user, "stats": stats}
+        request, "admin/dashboard.html", {"user": user, "stats": stats}
     )
 
 
@@ -231,5 +230,5 @@ async def admin_users_page(
 
     users = await list_users(db)
     return templates.TemplateResponse(
-        "admin/users.html", {"request": request, "user": user, "users": users}
+        request, "admin/users.html", {"user": user, "users": users}
     )
