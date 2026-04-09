@@ -7,14 +7,12 @@
 import asyncio
 import sys
 
-from passlib.context import CryptContext
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from app.config import settings
 from app.models.user import User
-
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+from app.services.auth_service import hash_password
 
 
 async def create_admin() -> None:
@@ -35,7 +33,7 @@ async def create_admin() -> None:
         admin = User(
             username=settings.initial_admin_username,
             email=settings.initial_admin_email,
-            password_hash=pwd_context.hash(settings.initial_admin_password),
+            password_hash=hash_password(settings.initial_admin_password),
             display_name="Administrator",
             role="admin",
             is_active=True,
