@@ -33,7 +33,7 @@ def build_search_query(
     filter_clauses: list[dict] = []
     if format_filter:
         formats = [f.strip() for f in format_filter.split(",")]
-        filter_clauses.append({"terms": {"doc_id": formats}})
+        filter_clauses.append({"terms": {"format": formats}})
 
     bool_query: dict[str, Any] = {"should": should_clauses, "minimum_should_match": 1}
     if must_clauses:
