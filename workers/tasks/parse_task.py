@@ -109,4 +109,12 @@ async def _parse_file(file_id: str) -> dict:
 
 @celery_app.task(name="workers.tasks.parse_task.parse_file", bind=True, max_retries=2)
 def parse_file(self, file_id: str) -> dict:
-    return asyncio.run(_parse_file(file_id))
+    result = asyncio.run(_parse_file(file_id))
+
+    # 파싱 성공 시 자동으로 인덱싱 태스크 연쇄
+    if result.get("status") in ("success", "partial"):
+        from workers.tasks.index_task import index_file
+        index_file.delay(file_id)
+        logger.info(f"Chained index task for: {file_id}")
+
+    return result

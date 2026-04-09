@@ -1,0 +1,60 @@
+{
+  "test_cases": [
+    {
+      "id": "TC001",
+      "query": "python list comprehension",
+      "expected_results": [
+        { "file_name_contains": "sample.txt", "must_exist": true }
+      ]
+    },
+    {
+      "id": "TC002",
+      "query": "SQL 데이터베이스 인덱스",
+      "expected_results": [
+        { "file_name_contains": "sample_text.pdf", "must_exist": true }
+      ]
+    },
+    {
+      "id": "TC003",
+      "query": "TCP/IP 프로토콜",
+      "expected_results": [
+        { "file_name_contains": "sample.docx", "must_exist": true }
+      ]
+    },
+    {
+      "id": "TC004",
+      "query": "지도학습 분류 회귀",
+      "expected_results": [
+        { "file_name_contains": "sample.epub", "must_exist": true }
+      ]
+    },
+    {
+      "id": "TC005",
+      "query": "트랜잭션 ACID",
+      "expected_results": [
+        { "file_name_contains": "sample_text.pdf", "must_exist": true }
+      ]
+    },
+    {
+      "id": "TC006",
+      "query": "딥러닝 CNN Transformer",
+      "expected_results": [
+        { "file_name_contains": "sample.epub", "must_exist": true }
+      ]
+    },
+    {
+      "id": "TC007",
+      "query": "HTTP GET POST",
+      "expected_results": [
+        { "file_name_contains": "sample.docx", "must_exist": true }
+      ]
+    },
+    {
+      "id": "TC008",
+      "query": "해시 테이블 딕셔너리",
+      "expected_results": [
+        { "file_name_contains": "sample.txt", "must_exist": true }
+      ]
+    }
+  ]
+}

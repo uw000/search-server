@@ -82,11 +82,20 @@ async def upload_document(
     dest_path = await save_upload(content, file.filename)
     db_file = await register_file(db, dest_path)
 
+    # Celery 파싱 태스크 큐 등록
+    try:
+        from workers.tasks.parse_task import parse_file
+        parse_file.delay(str(db_file.file_id))
+        queued = True
+    except Exception:
+        queued = False
+
     return {
-        "message": "File uploaded successfully. Parsing will be queued.",
+        "message": "File uploaded successfully.",
         "file_id": str(db_file.file_id),
         "file_name": db_file.file_name,
         "parse_status": db_file.parse_status,
+        "parse_queued": queued,
     }
 
 

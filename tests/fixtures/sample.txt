@@ -1,0 +1,21 @@
+Python 프로그래밍 가이드
+
+Chapter 1: 리스트와 튜플
+
+Python의 list comprehension은 매우 강력한 기능입니다. 리스트 컴프리헨션을 사용하면 간결하고 읽기 쉬운 코드를 작성할 수 있습니다.
+
+squares = [x**2 for x in range(10)]
+
+이 코드는 0부터 9까지의 제곱수를 생성합니다.
+
+Chapter 2: 딕셔너리
+
+딕셔너리는 키-값 쌍을 저장하는 자료구조입니다. 해시 테이블을 기반으로 구현되어 있어 O(1) 시간에 조회가 가능합니다.
+
+data = {'name': 'Alice', 'age': 30}
+
+Chapter 3: 함수형 프로그래밍
+
+map, filter, reduce 같은 함수형 프로그래밍 패턴을 Python에서도 사용할 수 있습니다. lambda 표현식과 함께 사용하면 더욱 강력합니다.
+
+result = list(map(lambda x: x * 2, [1, 2, 3, 4, 5]))
