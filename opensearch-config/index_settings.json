@@ -1,0 +1,115 @@
+{
+  "documents": {
+    "settings": {
+      "number_of_shards": 1,
+      "number_of_replicas": 0,
+      "analysis": {
+        "analyzer": {
+          "korean_english": {
+            "type": "custom",
+            "tokenizer": "nori_tokenizer",
+            "filter": ["lowercase", "nori_readingform"]
+          }
+        },
+        "tokenizer": {
+          "nori_tokenizer": {
+            "type": "nori_tokenizer",
+            "decompound_mode": "mixed"
+          }
+        }
+      }
+    },
+    "mappings": {
+      "properties": {
+        "doc_id": { "type": "keyword" },
+        "title": {
+          "type": "text",
+          "analyzer": "korean_english",
+          "fields": {
+            "keyword": { "type": "keyword" },
+            "english": { "type": "text", "analyzer": "english" }
+          }
+        },
+        "author": {
+          "type": "text",
+          "fields": { "keyword": { "type": "keyword" } }
+        },
+        "format": { "type": "keyword" },
+        "file_name": { "type": "keyword" },
+        "total_pages": { "type": "integer" },
+        "total_chunks": { "type": "integer" },
+        "parse_quality": { "type": "float" },
+        "has_ocr_pages": { "type": "boolean" },
+        "tags": { "type": "keyword" },
+        "language": { "type": "keyword" },
+        "indexed_at": { "type": "date" }
+      }
+    }
+  },
+  "chunks": {
+    "settings": {
+      "number_of_shards": 2,
+      "number_of_replicas": 0,
+      "analysis": {
+        "analyzer": {
+          "nori_mixed": {
+            "type": "custom",
+            "tokenizer": "nori_mixed_tokenizer",
+            "filter": ["lowercase", "nori_readingform", "nori_number"]
+          },
+          "ngram_analyzer": {
+            "type": "custom",
+            "tokenizer": "ngram_tokenizer",
+            "filter": ["lowercase"]
+          }
+        },
+        "tokenizer": {
+          "nori_mixed_tokenizer": {
+            "type": "nori_tokenizer",
+            "decompound_mode": "mixed"
+          },
+          "ngram_tokenizer": {
+            "type": "ngram",
+            "min_gram": 2,
+            "max_gram": 4,
+            "token_chars": ["letter", "digit"]
+          }
+        }
+      }
+    },
+    "mappings": {
+      "properties": {
+        "chunk_id": { "type": "keyword" },
+        "doc_id": { "type": "keyword" },
+        "page_number": { "type": "integer" },
+        "chapter": {
+          "type": "text",
+          "analyzer": "nori_mixed",
+          "fields": { "keyword": { "type": "keyword" } }
+        },
+        "section": { "type": "keyword" },
+        "content": {
+          "type": "text",
+          "analyzer": "nori_mixed",
+          "fields": {
+            "english": { "type": "text", "analyzer": "english" },
+            "standard": { "type": "text", "analyzer": "standard" },
+            "ngram": { "type": "text", "analyzer": "ngram_analyzer" }
+          }
+        },
+        "content_type": { "type": "keyword" },
+        "is_ocr": { "type": "boolean" },
+        "char_count": { "type": "integer" },
+        "embedding": {
+          "type": "knn_vector",
+          "dimension": 768,
+          "method": {
+            "name": "hnsw",
+            "space_type": "cosinesimil",
+            "engine": "faiss"
+          }
+        }
+      }
+    }
+  }
+}

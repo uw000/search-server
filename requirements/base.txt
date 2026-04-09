@@ -10,7 +10,7 @@ asyncpg>=0.29.0
 alembic>=1.13.0
 
 # 검색
-opensearch-py>=2.4.0
+opensearch-py[async]>=2.4.0
 
 # 문서 파싱
 PyMuPDF>=1.24.0

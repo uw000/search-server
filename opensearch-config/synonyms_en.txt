@@ -1,0 +1,8 @@
+# English synonyms dictionary
+# Format: word1, word2 => canonical
+# Or: word1, word2 (bidirectional)
+#
+# Examples:
+# database, db
+# javascript, js
+# configuration, config
