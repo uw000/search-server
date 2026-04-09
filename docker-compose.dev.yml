@@ -1,0 +1,51 @@
+# 개발 환경 오버라이드
+# 사용: docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+
+services:
+  opensearch:
+    environment:
+      - OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m
+    mem_limit: 1g
+
+  opensearch-dashboards:
+    mem_limit: 512m
+
+  postgres:
+    mem_limit: 512m
+
+  redis:
+    mem_limit: 256m
+
+  api:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.api
+      target: dev
+    volumes:
+      - documents:/data/documents
+      - preview-cache:/data/preview-cache
+      - ./app:/app/app:ro
+      - ./workers:/app/workers:ro
+    mem_limit: 1g
+    environment:
+      - OPENSEARCH_URL=http://opensearch:9200
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-search}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-searchdb}
+      - REDIS_URL=redis://redis:6379/0
+      - DOCUMENT_ROOT=/data/documents
+      - PREVIEW_CACHE=/data/preview-cache
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY:-dev_secret_key_not_for_production}
+      - INITIAL_ADMIN_USERNAME=${INITIAL_ADMIN_USERNAME:-admin}
+      - INITIAL_ADMIN_PASSWORD=${INITIAL_ADMIN_PASSWORD:-admin}
+      - INITIAL_ADMIN_EMAIL=${INITIAL_ADMIN_EMAIL:-admin@localhost}
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  worker:
+    volumes:
+      - documents:/data/documents
+      - preview-cache:/data/preview-cache
+      - ./app:/app/app:ro
+      - ./workers:/app/workers:ro
+    mem_limit: 2g
+
+  file-watcher:
+    mem_limit: 128m

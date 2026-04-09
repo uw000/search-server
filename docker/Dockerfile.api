@@ -1,0 +1,29 @@
+FROM python:3.12-slim AS base
+
+WORKDIR /app
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends curl && \
+    rm -rf /var/lib/apt/lists/*
+
+COPY requirements/base.txt requirements/base.txt
+COPY requirements/prod.txt requirements/prod.txt
+RUN pip install --no-cache-dir -r requirements/prod.txt
+
+COPY app/ app/
+COPY workers/ workers/
+COPY migrations/ migrations/
+COPY alembic.ini .
+COPY scripts/ scripts/
+
+EXPOSE 8000
+
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+
+# 개발용 타겟 (핫 리로드)
+FROM base AS dev
+
+COPY requirements/dev.txt requirements/dev.txt
+RUN pip install --no-cache-dir -r requirements/dev.txt
+
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
