@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import ForeignKey, Integer, Text, func
+from sqlalchemy import DateTime, ForeignKey, Integer, Text, func
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -21,6 +21,6 @@ class SearchHistory(Base):
     result_count: Mapped[int | None] = mapped_column(Integer)
     took_ms: Mapped[int | None] = mapped_column(Integer)
     filters: Mapped[dict | None] = mapped_column(JSONB)
-    searched_at: Mapped[datetime] = mapped_column(default=func.now())
+    searched_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     user: Mapped["User | None"] = relationship(back_populates="search_history")

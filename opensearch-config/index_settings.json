@@ -48,8 +48,10 @@
   },
   "chunks": {
     "settings": {
+      "index.knn": true,
       "number_of_shards": 2,
       "number_of_replicas": 0,
+      "max_ngram_diff": 2,
       "analysis": {
         "analyzer": {
           "nori_mixed": {

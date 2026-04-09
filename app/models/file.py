@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import BigInteger, Boolean, Float, Integer, String, Text
+from sqlalchemy import BigInteger, Boolean, DateTime, Float, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base, TimestampMixin
@@ -24,7 +24,7 @@ class File(TimestampMixin, Base):
     parse_status: Mapped[str] = mapped_column(String(20), default="pending")
     parse_quality: Mapped[float] = mapped_column(Float, default=0.0)
     parse_error: Mapped[str | None] = mapped_column(Text)
-    parsed_at: Mapped[datetime | None] = mapped_column(default=None)
+    parsed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), default=None)
 
     title: Mapped[str | None] = mapped_column(Text)
     author: Mapped[str | None] = mapped_column(Text)
@@ -33,10 +33,10 @@ class File(TimestampMixin, Base):
     total_chunks: Mapped[int] = mapped_column(Integer, default=0)
     has_ocr_pages: Mapped[bool] = mapped_column(Boolean, default=False)
 
-    indexed_at: Mapped[datetime | None] = mapped_column(default=None)
+    indexed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), default=None)
     index_version: Mapped[int] = mapped_column(Integer, default=0)
 
-    file_modified_at: Mapped[datetime | None] = mapped_column(default=None)
+    file_modified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), default=None)
 
     chunks: Mapped[list["Chunk"]] = relationship(back_populates="file", cascade="all, delete-orphan")
     tags: Mapped[list["Tag"]] = relationship(back_populates="file", cascade="all, delete-orphan")

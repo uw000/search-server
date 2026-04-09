@@ -7,7 +7,7 @@ RUN apt-get update && \
     tesseract-ocr \
     tesseract-ocr-kor \
     tesseract-ocr-eng \
-    libgl1-mesa-glx \
+    libgl1 \
     libglib2.0-0 && \
     rm -rf /var/lib/apt/lists/*
 
@@ -19,5 +19,6 @@ COPY workers/ workers/
 COPY migrations/ migrations/
 COPY alembic.ini .
 COPY scripts/ scripts/
+COPY opensearch-config/ opensearch-config/
 
 CMD ["celery", "-A", "workers.celery_app", "worker", "--loglevel=info", "--concurrency=2"]

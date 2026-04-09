@@ -15,6 +15,7 @@ COPY workers/ workers/
 COPY migrations/ migrations/
 COPY alembic.ini .
 COPY scripts/ scripts/
+COPY opensearch-config/ opensearch-config/
 
 EXPOSE 8000
 
