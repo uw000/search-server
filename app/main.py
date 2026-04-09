@@ -1,11 +1,12 @@
-from contextlib import asynccontextmanager
 from collections.abc import AsyncGenerator
+from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 
 from app.api.router import api_router
+from app.api.web import router as web_router
 from app.opensearch.client import close_opensearch_client
 
 
@@ -29,7 +30,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.mount("/static", StaticFiles(directory="app/static"), name="static")
+
 app.include_router(api_router)
+app.include_router(web_router)
 
 
 @app.get("/health")

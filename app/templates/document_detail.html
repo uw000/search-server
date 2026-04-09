@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block title %}{{ document.title or document.file_name }} - DocSearch{% endblock %}
+
+{% block content %}
+<div class="bg-white border rounded-lg p-6">
+    <div class="flex items-start justify-between">
+        <div>
+            <h1 class="text-xl font-bold">{{ document.title or document.file_name }}</h1>
+            {% if document.author %}
+            <p class="text-gray-600 mt-1">{{ document.author }}</p>
+            {% endif %}
+        </div>
+        <span class="bg-gray-100 px-3 py-1 rounded text-sm uppercase">{{ document.format }}</span>
+    </div>
+
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6 text-sm">
+        <div>
+            <span class="text-gray-500">상태</span>
+            <p class="font-medium mt-1">
+                {% if document.parse_status == 'success' %}
+                <span class="text-green-600">성공</span>
+                {% elif document.parse_status == 'partial' %}
+                <span class="text-yellow-600">부분</span>
+                {% elif document.parse_status == 'failed' %}
+                <span class="text-red-600">실패</span>
+                {% else %}
+                <span class="text-gray-500">{{ document.parse_status }}</span>
+                {% endif %}
+            </p>
+        </div>
+        <div>
+            <span class="text-gray-500">품질</span>
+            <p class="font-medium mt-1">{{ "%.1f%%"|format(document.parse_quality * 100) }}</p>
+        </div>
+        <div>
+            <span class="text-gray-500">페이지</span>
+            <p class="font-medium mt-1">{{ document.total_pages or '-' }}</p>
+        </div>
+        <div>
+            <span class="text-gray-500">청크</span>
+            <p class="font-medium mt-1">{{ document.total_chunks }}</p>
+        </div>
+    </div>
+
+    <div class="flex gap-3 mt-6">
+        <a href="/api/preview/{{ document.file_id }}/download"
+           class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 min-h-[44px] flex items-center">
+            다운로드
+        </a>
+        {% if document.format == 'pdf' and document.total_pages %}
+        <button hx-get="/api/preview/{{ document.file_id }}/text/1"
+                hx-target="#preview-content"
+                class="border px-4 py-2 rounded hover:bg-gray-50 min-h-[44px]">
+            미리보기
+        </button>
+        {% endif %}
+    </div>
+</div>
+
+<div id="preview-content" class="mt-4"></div>
+{% endblock %}

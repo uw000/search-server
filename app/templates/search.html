@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block title %}검색 - DocSearch{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    {% include "components/search_bar.html" %}
+</div>
+
+<div id="results">
+    {% if results is defined %}
+    {% include "results.html" %}
+    {% endif %}
+</div>
+
+<div id="preview-panel" class="fixed inset-y-0 right-0 w-full sm:w-1/2 lg:w-2/5 bg-white shadow-xl border-l transform translate-x-full transition-transform z-50 overflow-y-auto"
+     style="display:none;">
+</div>
+{% endblock %}

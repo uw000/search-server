@@ -1,0 +1,23 @@
+/* HTMX indicator */
+.htmx-indicator {
+    display: none;
+}
+.htmx-request .htmx-indicator {
+    display: block;
+}
+.htmx-request.htmx-indicator {
+    display: block;
+}
+
+/* Search highlight */
+mark {
+    background-color: #fef08a;
+    padding: 0 2px;
+    border-radius: 2px;
+}
+
+/* Preview panel animation */
+#preview-panel[style*="display: block"],
+#preview-panel:not([style*="display: none"]):not([style=""]) {
+    transform: translateX(0);
+}

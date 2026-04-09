@@ -1,0 +1,30 @@
+<form id="search-form" class="w-full" hx-get="/search" hx-target="#results" hx-push-url="true" hx-indicator="#spinner">
+    <div class="flex gap-2">
+        <input type="search" name="q" value="{{ query or '' }}"
+               placeholder="검색어를 입력하세요..."
+               class="flex-1 border border-gray-300 rounded-lg px-4 py-3 text-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+               autocomplete="off"
+               autofocus>
+        <button type="submit"
+                class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 min-w-[44px] min-h-[44px]">
+            검색
+        </button>
+    </div>
+    <div class="flex gap-3 mt-2 text-sm text-gray-500">
+        <select name="format" class="border rounded px-2 py-1">
+            <option value="">전체 포맷</option>
+            <option value="pdf" {{ 'selected' if format_filter == 'pdf' }}>PDF</option>
+            <option value="epub" {{ 'selected' if format_filter == 'epub' }}>EPUB</option>
+            <option value="docx" {{ 'selected' if format_filter == 'docx' }}>DOCX</option>
+            <option value="txt" {{ 'selected' if format_filter == 'txt' }}>TXT</option>
+        </select>
+        <select name="sort" class="border rounded px-2 py-1">
+            <option value="_score" {{ 'selected' if sort == '_score' }}>관련도순</option>
+            <option value="date" {{ 'selected' if sort == 'date' }}>최신순</option>
+            <option value="title" {{ 'selected' if sort == 'title' }}>제목순</option>
+        </select>
+    </div>
+</form>
+<div id="spinner" class="htmx-indicator text-center py-4">
+    <span class="text-gray-400">검색 중...</span>
+</div>

@@ -1,0 +1,15 @@
+<div class="bg-white border rounded-lg p-4">
+    <div class="flex justify-between items-center mb-3">
+        <h3 class="font-medium">페이지 {{ requested_page }}</h3>
+        <button onclick="this.closest('#preview-panel').style.display='none'; this.closest('#preview-panel').innerHTML='';"
+                class="text-gray-400 hover:text-gray-600 text-xl min-w-[44px] min-h-[44px] flex items-center justify-center">&times;</button>
+    </div>
+    {% for page in pages %}
+    <div class="mb-4 {% if page.page_number == requested_page %}bg-yellow-50 p-3 rounded{% endif %}">
+        <div class="text-xs text-gray-400 mb-1">p.{{ page.page_number }}
+            {% if page.is_ocr %}<span class="text-yellow-600">(OCR)</span>{% endif %}
+        </div>
+        <div class="text-sm leading-relaxed whitespace-pre-wrap">{{ page.content }}</div>
+    </div>
+    {% endfor %}
+</div>

@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}문서 검색{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+    <link rel="stylesheet" href="/static/css/custom.css">
+    {% block head %}{% endblock %}
+</head>
+<body class="bg-gray-50 min-h-screen flex flex-col">
+    {% block navbar %}
+    {% include "components/nav_bar.html" %}
+    {% endblock %}
+
+    <main class="flex-1 container mx-auto px-4 py-6 max-w-5xl">
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="text-center text-gray-400 text-sm py-4">
+        &copy; 2026 개인 문서 검색 서버
+    </footer>
+
+    <script src="/static/js/app.js"></script>
+</body>
+</html>

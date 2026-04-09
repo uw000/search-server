@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block title %}관리 대시보드 - DocSearch{% endblock %}
+
+{% block content %}
+<h1 class="text-xl font-bold mb-6">관리 대시보드</h1>
+
+<div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
+    <div class="bg-white border rounded-lg p-4 text-center">
+        <p class="text-2xl font-bold text-blue-600">{{ stats.total_documents }}</p>
+        <p class="text-sm text-gray-500">문서</p>
+    </div>
+    <div class="bg-white border rounded-lg p-4 text-center">
+        <p class="text-2xl font-bold text-green-600">{{ stats.total_chunks }}</p>
+        <p class="text-sm text-gray-500">청크</p>
+    </div>
+    <div class="bg-white border rounded-lg p-4 text-center">
+        <p class="text-2xl font-bold text-purple-600">{{ stats.total_users }}</p>
+        <p class="text-sm text-gray-500">사용자</p>
+    </div>
+    <div class="bg-white border rounded-lg p-4 text-center">
+        <p class="text-2xl font-bold text-gray-600">
+            {{ stats.parse_status_counts.get('success', 0) }}/{{ stats.total_documents }}
+        </p>
+        <p class="text-sm text-gray-500">파싱 완료</p>
+    </div>
+</div>
+
+<div class="grid sm:grid-cols-2 gap-4 mb-8">
+    <div class="bg-white border rounded-lg p-4">
+        <h2 class="font-medium mb-3">파싱 상태</h2>
+        {% for status, count in stats.parse_status_counts.items() %}
+        <div class="flex justify-between py-1 text-sm">
+            <span>{{ status }}</span>
+            <span class="font-medium">{{ count }}</span>
+        </div>
+        {% endfor %}
+    </div>
+    <div class="bg-white border rounded-lg p-4">
+        <h2 class="font-medium mb-3">포맷별 문서</h2>
+        {% for fmt, count in stats.formats_counts.items() %}
+        <div class="flex justify-between py-1 text-sm">
+            <span class="uppercase">{{ fmt }}</span>
+            <span class="font-medium">{{ count }}</span>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<div class="flex gap-3">
+    <form method="POST" action="/admin/scan">
+        <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 min-h-[44px]">
+            폴더 스캔
+        </button>
+    </form>
+    <form method="POST" action="/admin/reindex">
+        <button type="submit" class="bg-orange-500 text-white px-4 py-2 rounded hover:bg-orange-600 min-h-[44px]"
+                onclick="return confirm('전체 재인덱싱을 실행하시겠습니까?')">
+            전체 재인덱싱
+        </button>
+    </form>
+    <a href="/admin/users" class="border px-4 py-2 rounded hover:bg-gray-50 min-h-[44px] flex items-center">
+        사용자 관리
+    </a>
+</div>
+{% endblock %}
