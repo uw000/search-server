@@ -83,7 +83,12 @@ async def _parse_file(file_id: str) -> dict:
             job.duration_ms = int(
                 (job.finished_at - job.started_at).total_seconds() * 1000
             )
-            job.details = {"chunks": len(chunks_data), "quality": quality, "grade": grade}
+            job.details = {
+                "chunks": len(chunks_data),
+                "quality": quality,
+                "grade": grade,
+                "has_ocr_pages": parse_result.has_ocr_pages,
+            }
 
             await db.commit()
 
@@ -92,6 +97,7 @@ async def _parse_file(file_id: str) -> dict:
                 "status": grade,
                 "chunks": len(chunks_data),
                 "quality": quality,
+                "has_ocr_pages": parse_result.has_ocr_pages,
             }
 
         except Exception as e:
@@ -111,10 +117,27 @@ async def _parse_file(file_id: str) -> dict:
 def parse_file(self, file_id: str) -> dict:
     result = asyncio.run(_parse_file(file_id))
 
-    # 파싱 성공 시 자동으로 인덱싱 태스크 연쇄
     if result.get("status") in ("success", "partial"):
-        from workers.tasks.index_task import index_file
-        index_file.delay(file_id)
-        logger.info(f"Chained index task for: {file_id}")
+        # OCR이 필요한 페이지가 있으면 OCR 먼저, 완료 후 인덱싱
+        if result.get("has_ocr_pages"):
+            from workers.tasks.ocr_task import ocr_file
+            # OCR 완료 후 index를 연쇄하기 위해 link 사용
+            ocr_file.apply_async(
+                args=[file_id],
+                link=index_file_after_ocr.s(file_id),
+            )
+            logger.info(f"Chained OCR → index for: {file_id}")
+        else:
+            from workers.tasks.index_task import index_file
+            index_file.delay(file_id)
+            logger.info(f"Chained index task for: {file_id}")
 
     return result
+
+
+@celery_app.task(name="workers.tasks.parse_task.index_file_after_ocr")
+def index_file_after_ocr(ocr_result: dict, file_id: str) -> dict:
+    """OCR 완료 후 인덱싱을 실행하는 콜백 태스크."""
+    from workers.tasks.index_task import index_file
+    logger.info(f"OCR done (processed={ocr_result.get('ocr_pages_processed', 0)}), indexing: {file_id}")
+    return index_file(file_id)

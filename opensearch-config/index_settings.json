@@ -83,6 +83,9 @@
       "properties": {
         "chunk_id": { "type": "keyword" },
         "doc_id": { "type": "keyword" },
+        "format": { "type": "keyword" },
+        "file_name": { "type": "keyword" },
+        "title": { "type": "keyword" },
         "page_number": { "type": "integer" },
         "chapter": {
           "type": "text",

@@ -66,6 +66,13 @@ async def login_submit(
     return response
 
 
+@router.get("/logout")
+async def web_logout() -> Response:
+    response = RedirectResponse(url="/login", status_code=status.HTTP_302_FOUND)
+    response.delete_cookie("access_token")
+    return response
+
+
 @router.get("/", response_class=HTMLResponse)
 async def index_page(
     request: Request,

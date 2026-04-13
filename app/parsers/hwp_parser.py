@@ -8,7 +8,10 @@ class HwpParser(BaseParser):
         return [".hwp", ".hwpx"]
 
     def parse(self, file_path: Path) -> ParseResult:
-        raise NotImplementedError(
+        result = ParseResult()
+        result.title = file_path.stem
+        result.errors.append(
             "HWP 파싱은 아직 지원되지 않습니다. "
             "향후 pyhwp 또는 LibreOffice CLI를 활용하여 구현 예정입니다."
         )
+        return result

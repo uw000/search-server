@@ -1,6 +1,9 @@
+import uuid
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.responses import JSONResponse
+from jose import JWTError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_user
@@ -16,7 +19,7 @@ from app.services.auth_service import (
     hash_password,
     verify_password,
 )
-from app.services.user_service import create_user, get_user_by_username
+from app.services.user_service import create_user, get_user_by_id, get_user_by_username
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
@@ -39,8 +42,40 @@ async def login(
 
 
 @router.post("/logout")
-async def logout() -> dict:
-    return {"message": "Logged out successfully"}
+async def logout() -> JSONResponse:
+    response = JSONResponse(content={"message": "Logged out successfully"})
+    response.delete_cookie("access_token")
+    return response
+
+
+@router.post("/refresh", response_model=TokenResponse)
+async def refresh_token(
+    refresh_token: str,
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> TokenResponse:
+    """refresh_token으로 새 access_token을 발급."""
+    try:
+        payload = decode_token(refresh_token)
+        if payload.get("type") != "refresh":
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token type"
+            )
+        user_id = uuid.UUID(payload["sub"])
+    except (JWTError, KeyError, ValueError) as e:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired refresh token"
+        ) from e
+
+    user = await get_user_by_id(db, user_id)
+    if user is None or not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found or inactive"
+        )
+
+    return TokenResponse(
+        access_token=create_access_token(user.user_id, user.role),
+        refresh_token=create_refresh_token(user.user_id),
+    )
 
 
 @router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)

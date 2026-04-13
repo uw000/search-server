@@ -23,7 +23,7 @@ from app.services.index_service import index_document
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger(__name__)
 
-SUPPORTED_EXTS = {".pdf", ".epub", ".docx", ".txt"}
+SUPPORTED_EXTS = {".pdf", ".epub", ".docx", ".txt", ".hwp"}
 
 
 async def process_file(db: AsyncSession, file_path: Path) -> dict:

@@ -7,19 +7,21 @@
 import asyncio
 import logging
 import os
+import threading
 import time
 from pathlib import Path
 
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from watchdog.events import FileSystemEvent, FileSystemEventHandler
 from watchdog.observers import Observer
 
 from app.config import settings
 from app.services.document_service import register_file
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 logger = logging.getLogger(__name__)
 
 SUPPORTED_EXTS = {".pdf", ".epub", ".docx", ".txt", ".hwp"}
+DEBOUNCE_SECONDS = 3.0
 
 
 def _get_session_factory() -> async_sessionmaker:
@@ -30,6 +32,8 @@ def _get_session_factory() -> async_sessionmaker:
 class DocumentEventHandler(FileSystemEventHandler):
     def __init__(self) -> None:
         self._session_factory: async_sessionmaker | None = None
+        self._pending: dict[str, threading.Timer] = {}
+        self._lock = threading.Lock()
 
     def _get_factory(self) -> async_sessionmaker:
         if self._session_factory is None:
@@ -39,16 +43,33 @@ class DocumentEventHandler(FileSystemEventHandler):
     def on_created(self, event: FileSystemEvent) -> None:
         if event.is_directory:
             return
-        self._handle_file(event.src_path)
+        self._debounce(event.src_path)
 
     def on_modified(self, event: FileSystemEvent) -> None:
         if event.is_directory:
             return
-        self._handle_file(event.src_path)
+        self._debounce(event.src_path)
 
-    def _handle_file(self, path: str) -> None:
+    def _debounce(self, path: str) -> None:
+        """같은 파일에 대한 이벤트를 DEBOUNCE_SECONDS 동안 모아서 한 번만 처리."""
         file_path = Path(path)
         if file_path.suffix.lower() not in SUPPORTED_EXTS:
+            return
+
+        with self._lock:
+            if path in self._pending:
+                self._pending[path].cancel()
+
+            timer = threading.Timer(DEBOUNCE_SECONDS, self._handle_file, args=[path])
+            self._pending[path] = timer
+            timer.start()
+
+    def _handle_file(self, path: str) -> None:
+        with self._lock:
+            self._pending.pop(path, None)
+
+        file_path = Path(path)
+        if not file_path.exists():
             return
 
         logger.info(f"Detected file: {file_path}")
