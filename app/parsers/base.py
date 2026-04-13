@@ -31,6 +31,7 @@ class ParseResult:
 MIN_CHUNK_SIZE = 100
 MAX_CHUNK_SIZE = 5000
 OVERLAP_SIZE = 200
+MAX_FILE_SIZE_BYTES = 2 * 1024 * 1024 * 1024  # 2GB
 
 
 class BaseParser(ABC):
@@ -41,6 +42,16 @@ class BaseParser(ABC):
     @abstractmethod
     def supported_extensions(self) -> list[str]:
         ...
+
+    def check_file_size(self, file_path: Path) -> str | None:
+        """파일 크기 검증. 초과 시 에러 메시지 반환."""
+        size = file_path.stat().st_size
+        if size > MAX_FILE_SIZE_BYTES:
+            return (
+                f"파일 크기 {size / (1024**3):.1f}GB가 "
+                f"최대 허용 크기 {MAX_FILE_SIZE_BYTES / (1024**3):.0f}GB를 초과합니다"
+            )
+        return None
 
     def merge_small_chunks(self, chunks: list[ParsedChunk]) -> list[ParsedChunk]:
         if not chunks:

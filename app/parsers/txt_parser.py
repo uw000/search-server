@@ -14,6 +14,11 @@ class TxtParser(BaseParser):
     def parse(self, file_path: Path) -> ParseResult:
         result = ParseResult()
 
+        size_error = self.check_file_size(file_path)
+        if size_error:
+            result.errors.append(size_error)
+            return result
+
         try:
             raw = file_path.read_bytes()
             detected = chardet.detect(raw)
