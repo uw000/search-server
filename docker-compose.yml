@@ -6,7 +6,7 @@ services:
     environment:
       - discovery.type=single-node
       - plugins.security.disabled=true
-      - OPENSEARCH_JAVA_OPTS=-Xms2g -Xmx2g
+      - OPENSEARCH_JAVA_OPTS=-Xms8g -Xmx8g
       - DISABLE_INSTALL_DEMO_CONFIG=true
     ulimits:
       memlock: { soft: -1, hard: -1 }
@@ -18,7 +18,7 @@ services:
       - ./opensearch-config/user_dict_ko.txt:/usr/share/opensearch/config/user_dict_ko.txt
     ports:
       - "9200:9200"
-    mem_limit: 4g
+    mem_limit: 12g
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "curl -sf http://localhost:9200/_cluster/health || exit 1"]
