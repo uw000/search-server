@@ -32,11 +32,12 @@
 - NVIDIA Driver 535 이상 (CUDA 12.6 runtime 호환)
 - NVIDIA Container Toolkit
 - Docker Compose v2
+- RAM 8GB 이상 (OpenSearch JVM 힙 2GB + worker + 기타)
 
-GPU가 없으면 worker가 자동으로 Tesseract 로 fallback 합니다. 한국어 OCR 정확도가 크게 떨어지므로 운영 환경에서는 GPU 환경을 권장.
+GPU 없이도 동작하지만 Tesseract 로 fallback 되어 한국어 OCR 정확도가 크게 떨어집니다. 운영 환경에서는 GPU 강력 권장.
 
-### 최소 사양 (개발용, Tesseract)
-- 8GB RAM, 20GB 디스크
+### 최소 사양 (개발 / Tesseract)
+- 4GB RAM (dev override 로 OpenSearch 힙 축소 권장), 20GB 디스크
 
 ## 빠른 시작
 
@@ -44,8 +45,16 @@ GPU가 없으면 worker가 자동으로 Tesseract 로 fallback 합니다. 한국
 
 ```bash
 cp .env.example .env
-# .env 파일을 편집하여 비밀번호 등을 변경
 ```
+
+필수로 변경해야 하는 항목:
+
+| 변수 | 설명 |
+|---|---|
+| `POSTGRES_PASSWORD` | DB 비밀번호 (DATABASE_URL에도 동일하게 반영) |
+| `JWT_SECRET_KEY` | 임의의 긴 랜덤 문자열 (`openssl rand -hex 32` 추천) |
+| `INITIAL_ADMIN_PASSWORD` | 초기 관리자 비밀번호 |
+| `DATABASE_URL` | POSTGRES_PASSWORD 와 일치시킬 것 |
 
 ### 2. Docker Compose 실행
 
@@ -76,13 +85,15 @@ docker compose exec api python -m scripts.create_admin
 
 ```bash
 docker compose exec worker python -c "
+import torch
 from app.parsers.ocr_processor import get_ocr_engine, _is_surya_importable
+print('cuda:', torch.cuda.is_available())
 print('surya importable:', _is_surya_importable())
 print('engine:', get_ocr_engine().name)
 "
 ```
 
-`engine: surya` 가 정상. `tesseract` 면 GPU 설정 점검 필요.
+`cuda: True` / `engine: surya` 가 정상. `tesseract` 로 표시되면 GPU 설정 또는 Surya 의존성 점검 필요 (구체적 troubleshooting 은 `CLAUDE.md` 참조).
 
 ### 5. 접속
 
@@ -91,9 +102,11 @@ print('engine:', get_ocr_engine().name)
 
 ## 운영 작업
 
+모든 스크립트는 `python -m scripts.<이름>` 형태로 실행합니다 (모듈 경로 해석을 위해 `python scripts/...` 대신 `-m` 사용).
+
 ### 대량 초기 임포트
 ```bash
-docker compose exec worker python scripts/bulk_import.py <디렉토리_경로>
+docker compose exec worker python -m scripts.bulk_import <디렉토리_경로>
 ```
 
 ### 인덱스 재구축 (파괴적)
@@ -101,7 +114,7 @@ docker compose exec worker python scripts/bulk_import.py <디렉토리_경로>
 
 ```bash
 docker compose restart opensearch    # nori 사전·동의어 파일 재로드
-docker compose exec worker python scripts/rebuild_index.py
+docker compose exec worker python -m scripts.rebuild_index
 ```
 
 ### OCR 벤치마크
@@ -112,7 +125,7 @@ docker compose exec worker python -m scripts.ocr_benchmark --dataset tests/fixtu
 
 ### 검색 품질 리포트
 ```bash
-docker compose exec worker python scripts/quality_report.py
+docker compose exec worker python -m scripts.quality_report
 ```
 
 ## 프로젝트 구조
