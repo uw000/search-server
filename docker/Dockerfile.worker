@@ -1,13 +1,5 @@
 # GPU 가속 Surya OCR 을 지원하는 worker 이미지.
-#
-# - 베이스: nvidia/cuda 12.6 runtime (Ubuntu 24.04, python 3.12 포함)
-# - Tesseract 는 fallback 용으로 유지.
-# - PyTorch CUDA wheel 은 pypi 기본 index 에 없으므로 별도 --index-url 지정.
-# - arm64 로컬(M1) 에서는 amd64 emulation 으로 빌드 가능 (docker-compose 에서
-#   platform: linux/amd64 지정). 실제 GPU 실행은 x86_64 호스트에서만.
-
 FROM nvidia/cuda:12.6.0-runtime-ubuntu24.04
-
 ENV DEBIAN_FRONTEND=noninteractive \
     PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
@@ -15,7 +7,6 @@ ENV DEBIAN_FRONTEND=noninteractive \
     PIP_DISABLE_PIP_VERSION_CHECK=1 \
     PATH="/opt/venv/bin:${PATH}"
 
-# 시스템 의존성 및 Tesseract + Python 3.12 설치
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         python3.12 python3.12-venv \
@@ -24,30 +15,24 @@ RUN apt-get update && \
         ca-certificates && \
     rm -rf /var/lib/apt/lists/*
 
-# 격리된 virtualenv 사용 (Ubuntu 24.04 PEP 668 회피)
 RUN python3.12 -m venv /opt/venv && \
     /opt/venv/bin/pip install --upgrade -q pip setuptools wheel
 
 WORKDIR /app
-
 COPY requirements/base.txt requirements/base.txt
 COPY requirements/ocr.txt requirements/ocr.txt
+COPY requirements/constraints.txt requirements/constraints.txt
 
-# 레이어 캐시 최적화: 가장 무거운 torch 부터 → base → OCR 추가 의존성 순.
-# CUDA 12.4 호환 wheel(cu124) 사용. CUDA 12.6 드라이버와 정방향 호환.
-RUN pip install -q --index-url https://download.pytorch.org/whl/cu124 \
-        torch torchvision
+RUN pip install -q --index-url https://download.pytorch.org/whl/cu126 \
+        -c requirements/constraints.txt \
+        torch==2.7.1 torchvision==0.22.1
+RUN pip install -q -c requirements/constraints.txt -r requirements/base.txt
+RUN pip install -q -c requirements/constraints.txt -r requirements/ocr.txt
 
-RUN pip install -q -r requirements/base.txt
-
-RUN pip install -q -r requirements/ocr.txt
-
-# 애플리케이션 코드 (자주 바뀌므로 마지막 레이어)
 COPY app/ app/
 COPY workers/ workers/
 COPY migrations/ migrations/
 COPY alembic.ini .
 COPY scripts/ scripts/
 COPY opensearch-config/ opensearch-config/
-
 CMD ["celery", "-A", "workers.celery_app", "worker", "--loglevel=info", "--concurrency=2"]

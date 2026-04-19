@@ -1,0 +1,6 @@
+# surya-ocr 0.17.1 requires torch>=2.7.0 (확인됨)
+# CUDA 12.6 base 이미지 → cu126 index 사용
+# torch 2.7.x ↔ torchvision 0.22.x 매칭 페어
+torch==2.7.1
+torchvision==0.22.1
+transformers>=4.45,<5.0
