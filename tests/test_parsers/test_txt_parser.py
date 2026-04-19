@@ -23,7 +23,8 @@ def test_txt_parser_basic(tmp_path: Path) -> None:
 def test_txt_parser_chunking(tmp_path: Path) -> None:
     from app.parsers.txt_parser import TxtParser
 
-    long_text = "A" * 5000
+    # chunk_max_size(기본 5000) 를 확실히 초과시켜 다중 청크 분할 검증
+    long_text = ("문단 하나입니다. " * 400).strip() + "\n\n" + ("또 다른 문단입니다. " * 400).strip()
     test_file = tmp_path / "long.txt"
     test_file.write_text(long_text, encoding="utf-8")
 

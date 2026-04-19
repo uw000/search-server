@@ -1,8 +1,64 @@
-# 한국어 동의어 사전
-# 형식: 단어1, 단어2 => 대표어
-# 또는: 단어1, 단어2 (양방향)
+# 한국어 + 한영 혼용 동의어 사전 (synonym_graph 용)
 #
-# 예시:
-# 파이썬, python
-# 자바스크립트, javascript, js
-# 데이터베이스, DB, 디비
+# 포맷:
+#   A, B, C          : 양방향(상호 치환) — 어떤 토큰으로 검색해도 나머지가 매칭
+#   A, B => X        : 단방향(치환) — A/B 로 검색하면 X 로 확장
+#
+# 주의:
+#   1) 각 항목은 한 줄. 공백이 포함된 다단어 동의어는 synonym_graph 가 처리함.
+#   2) nori 가 "mixed" 모드로 분해한 토큰과 매칭되어야 하므로,
+#      여기 등재한 원어는 가급적 nori 의 분해 결과와 일치시킬 것.
+#   3) 작은 사전으로 시작하고, 운영하면서 오검색 로그를 보며 확장.
+
+# ─────────────────────────────────────────────
+# 프로그래밍 언어 / 프레임워크
+파이썬, python, py
+자바스크립트, javascript, js
+타입스크립트, typescript, ts
+골랭, golang, go언어
+쉘, shell, bash
+
+# ─────────────────────────────────────────────
+# 데이터 / 인프라
+데이터베이스, db, 디비, database
+관계형데이터베이스, rdb, rdbms
+포스트그레스큐엘, postgres, postgresql
+엔진엑스, nginx
+도커, docker
+쿠버네티스, kubernetes, k8s
+레디스, redis
+
+# ─────────────────────────────────────────────
+# 검색 / ML / AI
+오픈서치, opensearch
+일래스틱서치, elasticsearch, es
+형태소분석, 형태소분석기, morpheme
+인공지능, ai, artificial intelligence
+머신러닝, ml, machine learning
+딥러닝, dl, deep learning
+자연어처리, nlp, natural language processing
+대형언어모델, llm, large language model
+
+# ─────────────────────────────────────────────
+# AI 기업 / 모델
+앤트로픽, anthropic
+클로드, claude
+오픈에이아이, 오픈에이아이, openai
+챗지피티, chatgpt
+제미나이, gemini
+
+# ─────────────────────────────────────────────
+# 개발 개념
+테스트, test, 시험
+테스트주도개발, tdd, test-driven development
+지속적통합, ci, continuous integration
+지속적배포, cd, continuous deployment
+마이크로서비스, msa, microservices
+에이피아이, api
+
+# ─────────────────────────────────────────────
+# 문서 포맷
+피디에프, pdf
+이북, ebook, e-book
+전자책, ebook, e-book, 이북
+마크다운, markdown, md

@@ -4,17 +4,57 @@
       "number_of_shards": 1,
       "number_of_replicas": 0,
       "analysis": {
-        "analyzer": {
-          "korean_english": {
-            "type": "custom",
-            "tokenizer": "nori_tokenizer",
-            "filter": ["lowercase", "nori_readingform"]
+        "filter": {
+          "ko_synonym_graph": {
+            "type": "synonym_graph",
+            "synonyms_path": "synonyms_ko.txt",
+            "lenient": true
+          },
+          "en_synonym_graph": {
+            "type": "synonym_graph",
+            "synonyms_path": "synonyms_en.txt",
+            "lenient": true
+          },
+          "english_stemmer_filter": {
+            "type": "stemmer",
+            "language": "english"
+          },
+          "english_stop_filter": {
+            "type": "stop",
+            "stopwords": "_english_"
+          },
+          "english_possessive_filter": {
+            "type": "stemmer",
+            "language": "possessive_english"
           }
         },
         "tokenizer": {
-          "nori_tokenizer": {
+          "korean_english_tokenizer": {
             "type": "nori_tokenizer",
-            "decompound_mode": "mixed"
+            "decompound_mode": "mixed",
+            "user_dictionary": "user_dict_ko.txt"
+          }
+        },
+        "analyzer": {
+          "korean_english": {
+            "type": "custom",
+            "tokenizer": "korean_english_tokenizer",
+            "filter": ["lowercase", "nori_readingform"]
+          },
+          "korean_english_search": {
+            "type": "custom",
+            "tokenizer": "korean_english_tokenizer",
+            "filter": ["lowercase", "nori_readingform", "ko_synonym_graph"]
+          },
+          "english_custom": {
+            "type": "custom",
+            "tokenizer": "standard",
+            "filter": ["english_possessive_filter", "lowercase", "english_stop_filter", "english_stemmer_filter"]
+          },
+          "english_custom_search": {
+            "type": "custom",
+            "tokenizer": "standard",
+            "filter": ["english_possessive_filter", "lowercase", "english_stop_filter", "english_stemmer_filter", "en_synonym_graph"]
           }
         }
       }
@@ -25,9 +65,14 @@
         "title": {
           "type": "text",
           "analyzer": "korean_english",
+          "search_analyzer": "korean_english_search",
           "fields": {
             "keyword": { "type": "keyword" },
-            "english": { "type": "text", "analyzer": "english" }
+            "english": {
+              "type": "text",
+              "analyzer": "english_custom",
+              "search_analyzer": "english_custom_search"
+            }
           }
         },
         "author": {
@@ -53,28 +98,68 @@
       "number_of_replicas": 0,
       "max_ngram_diff": 2,
       "analysis": {
-        "analyzer": {
-          "nori_mixed": {
-            "type": "custom",
-            "tokenizer": "nori_mixed_tokenizer",
-            "filter": ["lowercase", "nori_readingform", "nori_number"]
+        "filter": {
+          "ko_synonym_graph": {
+            "type": "synonym_graph",
+            "synonyms_path": "synonyms_ko.txt",
+            "lenient": true
           },
-          "ngram_analyzer": {
-            "type": "custom",
-            "tokenizer": "ngram_tokenizer",
-            "filter": ["lowercase"]
+          "en_synonym_graph": {
+            "type": "synonym_graph",
+            "synonyms_path": "synonyms_en.txt",
+            "lenient": true
+          },
+          "english_stemmer_filter": {
+            "type": "stemmer",
+            "language": "english"
+          },
+          "english_stop_filter": {
+            "type": "stop",
+            "stopwords": "_english_"
+          },
+          "english_possessive_filter": {
+            "type": "stemmer",
+            "language": "possessive_english"
           }
         },
         "tokenizer": {
           "nori_mixed_tokenizer": {
             "type": "nori_tokenizer",
-            "decompound_mode": "mixed"
+            "decompound_mode": "mixed",
+            "user_dictionary": "user_dict_ko.txt"
           },
           "ngram_tokenizer": {
             "type": "ngram",
             "min_gram": 2,
             "max_gram": 4,
             "token_chars": ["letter", "digit"]
+          }
+        },
+        "analyzer": {
+          "nori_mixed": {
+            "type": "custom",
+            "tokenizer": "nori_mixed_tokenizer",
+            "filter": ["lowercase", "nori_readingform", "nori_number"]
+          },
+          "nori_mixed_search": {
+            "type": "custom",
+            "tokenizer": "nori_mixed_tokenizer",
+            "filter": ["lowercase", "nori_readingform", "nori_number", "ko_synonym_graph"]
+          },
+          "english_custom": {
+            "type": "custom",
+            "tokenizer": "standard",
+            "filter": ["english_possessive_filter", "lowercase", "english_stop_filter", "english_stemmer_filter"]
+          },
+          "english_custom_search": {
+            "type": "custom",
+            "tokenizer": "standard",
+            "filter": ["english_possessive_filter", "lowercase", "english_stop_filter", "english_stemmer_filter", "en_synonym_graph"]
+          },
+          "ngram_analyzer": {
+            "type": "custom",
+            "tokenizer": "ngram_tokenizer",
+            "filter": ["lowercase"]
           }
         }
       }
@@ -90,14 +175,20 @@
         "chapter": {
           "type": "text",
           "analyzer": "nori_mixed",
+          "search_analyzer": "nori_mixed_search",
           "fields": { "keyword": { "type": "keyword" } }
         },
         "section": { "type": "keyword" },
         "content": {
           "type": "text",
           "analyzer": "nori_mixed",
+          "search_analyzer": "nori_mixed_search",
           "fields": {
-            "english": { "type": "text", "analyzer": "english" },
+            "english": {
+              "type": "text",
+              "analyzer": "english_custom",
+              "search_analyzer": "english_custom_search"
+            },
             "standard": { "type": "text", "analyzer": "standard" },
             "ngram": { "type": "text", "analyzer": "ngram_analyzer" }
           }

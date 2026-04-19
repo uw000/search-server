@@ -1,8 +1,36 @@
-# English synonyms dictionary
-# Format: word1, word2 => canonical
-# Or: word1, word2 (bidirectional)
+# English synonym dictionary (synonym_graph).
+# Format:
+#   a, b, c        : bidirectional
+#   a, b => c      : unidirectional (expands to c)
 #
-# Examples:
-# database, db
-# javascript, js
-# configuration, config
+# Keep entries lowercase — the search analyzer lowercases before matching.
+
+# ─────────────────────────────────────────────
+# Databases / Infra
+database, db
+postgresql, postgres
+kubernetes, k8s
+elasticsearch, es
+opensearch
+javascript, js
+typescript, ts
+configuration, config
+
+# ─────────────────────────────────────────────
+# AI / ML
+artificial intelligence, ai
+machine learning, ml
+deep learning, dl
+natural language processing, nlp
+large language model, llm
+retrieval augmented generation, rag
+
+# ─────────────────────────────────────────────
+# Software engineering
+continuous integration, ci
+continuous deployment, cd
+test driven development, tdd
+application programming interface, api
+microservices, msa
+object oriented programming, oop
+functional programming, fp

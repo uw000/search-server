@@ -15,6 +15,7 @@ services:
       - opensearch-data:/usr/share/opensearch/data
       - ./opensearch-config/synonyms_ko.txt:/usr/share/opensearch/config/synonyms_ko.txt
       - ./opensearch-config/synonyms_en.txt:/usr/share/opensearch/config/synonyms_en.txt
+      - ./opensearch-config/user_dict_ko.txt:/usr/share/opensearch/config/user_dict_ko.txt
     ports:
       - "9200:9200"
     mem_limit: 4g

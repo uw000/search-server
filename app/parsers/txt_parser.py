@@ -2,9 +2,8 @@ from pathlib import Path
 
 import chardet
 
-from app.parsers.base import OVERLAP_SIZE, BaseParser, ParsedChunk, ParseResult
-
-CHUNK_SIZE = 2000
+from app.parsers.base import BaseParser, ParseResult
+from app.parsers.text_cleaner import clean_text
 
 
 class TxtParser(BaseParser):
@@ -29,27 +28,12 @@ class TxtParser(BaseParser):
             return result
 
         result.title = file_path.stem
+        text = clean_text(text, drop_page_numbers=False)
 
-        chunks: list[ParsedChunk] = []
-        start = 0
-        chunk_num = 0
+        if not text.strip():
+            return result
 
-        while start < len(text):
-            end = min(start + CHUNK_SIZE, len(text))
-            chunk_text = text[start:end]
-
-            if chunk_text.strip():
-                chunk_num += 1
-                chunks.append(ParsedChunk(
-                    content=chunk_text,
-                    page_number=chunk_num,
-                    content_type="text",
-                ))
-
-            if end >= len(text):
-                break
-            start = end - OVERLAP_SIZE
-
+        chunks = self.chunk_long_text(text, page_number=1, content_type="text")
         chunks = self.merge_small_chunks(chunks)
         result.chunks = chunks
         result.total_pages = len(chunks)

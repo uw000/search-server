@@ -1,10 +1,68 @@
 from pathlib import Path
 
 import ebooklib
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, Tag
 from ebooklib import epub
 
-from app.parsers.base import OVERLAP_SIZE, BaseParser, ParsedChunk, ParseResult
+from app.parsers.base import BaseParser, ParseResult
+from app.parsers.text_cleaner import clean_text
+
+
+_FOOTNOTE_CLASSES = {
+    "footnote",
+    "footnotes",
+    "endnote",
+    "endnotes",
+    "rearnote",
+    "rearnotes",
+    "noteref",  # 각주 참조는 본문에서 제거 대상
+}
+_FOOTNOTE_EPUB_TYPES = ("footnote", "endnote", "rearnote")
+
+
+def _extract_footnotes(soup: BeautifulSoup) -> list[str]:
+    """EPUB DOM 에서 각주/미주 본문을 분리 추출.
+
+    찾은 엘리먼트는 DOM 에서 제거(decompose)하여 본문 텍스트 추출 시 중복되지 않게 한다.
+    반환값은 각주 본문 텍스트 리스트.
+    """
+    notes: list[str] = []
+
+    # 1) EPUB3 표준: epub:type 속성 기반
+    for el in list(soup.find_all(attrs={"epub:type": True})):
+        if not isinstance(el, Tag):
+            continue
+        etype = str(el.get("epub:type") or "").lower()
+        if any(t in etype for t in _FOOTNOTE_EPUB_TYPES):
+            txt = el.get_text(separator="\n", strip=True)
+            if txt:
+                notes.append(txt)
+            el.decompose()
+
+    # 2) 클래스 기반(EPUB2 / Calibre / 일반 관례)
+    for tag_name in ("aside", "div", "section"):
+        for el in list(soup.find_all(tag_name, class_=True)):
+            if not isinstance(el, Tag):
+                continue
+            classes = {c.lower() for c in (el.get("class") or [])}
+            if classes & _FOOTNOTE_CLASSES:
+                txt = el.get_text(separator="\n", strip=True)
+                if txt:
+                    notes.append(txt)
+                el.decompose()
+
+    # 3) 본문에 남은 각주 참조(sup/a.noteref 등)는 검색 소음이라 제거
+    for ref in list(soup.find_all(attrs={"epub:type": True})):
+        if not isinstance(ref, Tag):
+            continue
+        etype = str(ref.get("epub:type") or "").lower()
+        if "noteref" in etype:
+            ref.decompose()
+    for ref in list(soup.select(".noteref, sup.footnote, sup.footnoteref, a.footnoteref")):
+        if isinstance(ref, Tag):
+            ref.decompose()
+
+    return notes
 
 
 class EpubParser(BaseParser):
@@ -43,9 +101,17 @@ class EpubParser(BaseParser):
         for item in book.get_items_of_type(ebooklib.ITEM_DOCUMENT):
             content = item.get_content()
             soup = BeautifulSoup(content, "html.parser")
-            text = soup.get_text(separator="\n", strip=True)
+            # 문단 경계 보존을 위해 block-level 태그는 줄바꿈 2회로 구분
+            for br in soup.find_all("br"):
+                br.replace_with("\n")
 
-            if not text.strip():
+            # 각주/미주를 먼저 분리 (본문 추출 전)
+            footnote_texts = _extract_footnotes(soup)
+
+            text = soup.get_text(separator="\n", strip=True)
+            text = clean_text(text, drop_page_numbers=False)
+
+            if not text.strip() and not footnote_texts:
                 continue
 
             chapter_num += 1
@@ -54,44 +120,28 @@ class EpubParser(BaseParser):
             if heading:
                 chapter_title = heading.get_text(strip=True)
 
-            chunks = self._chunk_with_overlap(text, chapter_num, chapter_title)
-            result.chunks.extend(chunks)
-
-        result.chunks = self.merge_small_chunks(result.chunks)
-        result.total_pages = chapter_num
-        return result
-
-    def _chunk_with_overlap(
-        self, text: str, chapter_num: int, chapter_title: str | None
-    ) -> list[ParsedChunk]:
-        from app.parsers.base import MAX_CHUNK_SIZE
-
-        chunks: list[ParsedChunk] = []
-
-        if len(text) <= MAX_CHUNK_SIZE:
-            chunks.append(ParsedChunk(
-                content=text,
-                page_number=chapter_num,
-                chapter=chapter_title,
-                content_type="text",
-            ))
-            return chunks
-
-        start = 0
-        while start < len(text):
-            end = min(start + MAX_CHUNK_SIZE, len(text))
-            chunk_text = text[start:end]
-
-            if chunk_text.strip():
-                chunks.append(ParsedChunk(
-                    content=chunk_text,
+            if text.strip():
+                result.chunks.extend(self.chunk_long_text(
+                    text,
                     page_number=chapter_num,
                     chapter=chapter_title,
                     content_type="text",
                 ))
 
-            if end >= len(text):
-                break
-            start = end - OVERLAP_SIZE
+            if footnote_texts:
+                notes_text = clean_text(
+                    "\n\n".join(footnote_texts),
+                    drop_page_numbers=False,
+                )
+                if notes_text.strip():
+                    result.chunks.extend(self.chunk_long_text(
+                        notes_text,
+                        page_number=chapter_num,
+                        chapter=chapter_title,
+                        section=f"Footnotes (Ch.{chapter_num})",
+                        content_type="text",
+                    ))
 
-        return chunks
+        result.chunks = self.merge_small_chunks(result.chunks)
+        result.total_pages = chapter_num
+        return result
