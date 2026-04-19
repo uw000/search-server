@@ -1,0 +1,7 @@
+# OCR 전용 의존성 — worker 컨테이너에서만 설치.
+# torch / torchvision 은 CUDA wheel 인덱스에서 별도 설치 (Dockerfile 참조).
+#
+# 로컬(M1) 에서 pip install 시 에러 가능: torch 없이는 surya import 실패.
+# 따라서 로컬 dev 환경에선 이 파일 대신 base.txt 만 쓰고, worker 이미지만 이것을 설치한다.
+
+surya-ocr>=0.14.0

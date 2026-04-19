@@ -11,8 +11,9 @@ from app.config import settings
 from app.models.file import File
 from app.models.job_log import JobLog
 from app.parsers import get_parser
+from app.parsers.pdf_preprocessor import preprocess_pdf
 from app.parsers.quality_checker import calculate_quality_score, quality_grade
-from app.services.document_service import save_parse_result
+from app.services.document_service import _compute_file_hash, save_parse_result
 from workers.celery_app import celery_app
 
 logger = logging.getLogger(__name__)
@@ -46,6 +47,28 @@ async def _parse_file(file_id: str) -> dict:
 
         try:
             file_path = Path(file.file_path)
+
+            # PDF 전처리: 고DPI 스캔본은 자동 다운스케일 + 원본 아카이빙
+            preprocess_info: dict | None = None
+            if file_path.suffix.lower() == ".pdf":
+                pp = preprocess_pdf(
+                    file_path,
+                    settings.documents_originals_root,
+                    target_dpi=settings.max_dpi,
+                    sample_pages=settings.dpi_sample_pages,
+                    jpeg_quality=settings.downscale_jpeg_quality,
+                    enabled=settings.auto_downscale_enabled,
+                )
+                preprocess_info = {
+                    "detected_dpi": pp.detected_dpi,
+                    "downscaled": pp.downscaled,
+                    "original_archive": str(pp.original_archive) if pp.original_archive else None,
+                }
+                if pp.downscaled:
+                    # 작업 파일이 교체되었으므로 hash/size 재계산
+                    file.file_hash = _compute_file_hash(file_path)
+                    file.file_size = file_path.stat().st_size
+
             parser = get_parser(file_path)
             parse_result = parser.parse(file_path)
 
@@ -88,6 +111,7 @@ async def _parse_file(file_id: str) -> dict:
                 "quality": quality,
                 "grade": grade,
                 "has_ocr_pages": parse_result.has_ocr_pages,
+                "preprocess": preprocess_info,
             }
 
             await db.commit()

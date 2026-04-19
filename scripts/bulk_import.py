@@ -19,8 +19,13 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 from app.config import settings
 from app.models.file import File
 from app.parsers import get_parser
+from app.parsers.pdf_preprocessor import preprocess_pdf
 from app.parsers.quality_checker import calculate_quality_score, quality_grade
-from app.services.document_service import register_file, save_parse_result
+from app.services.document_service import (
+    _is_under_originals,
+    register_file,
+    save_parse_result,
+)
 from app.services.index_service import index_document
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
@@ -32,6 +37,18 @@ SUPPORTED_EXTS = {".pdf", ".epub", ".docx", ".txt"}
 async def process_single(db: AsyncSession, file_path: Path) -> dict:
     """단일 파일을 등록 → 파싱 → 인덱싱."""
     try:
+        # PDF 는 먼저 전처리 (고DPI 스캔본 다운스케일 + 원본 아카이빙).
+        # register_file 이 해시를 계산하기 때문에 전처리를 먼저 수행해야 DB 해시가 최종 파일 기준이 된다.
+        if file_path.suffix.lower() == ".pdf":
+            preprocess_pdf(
+                file_path,
+                settings.documents_originals_root,
+                target_dpi=settings.max_dpi,
+                sample_pages=settings.dpi_sample_pages,
+                jpeg_quality=settings.downscale_jpeg_quality,
+                enabled=settings.auto_downscale_enabled,
+            )
+
         file = await register_file(db, file_path)
 
         # 이미 파싱 완료된 파일은 스킵
@@ -84,7 +101,9 @@ async def run(scan_dir: Path) -> None:
 
     files = sorted(
         f for f in scan_dir.rglob("*")
-        if f.suffix.lower() in SUPPORTED_EXTS and f.is_file()
+        if f.suffix.lower() in SUPPORTED_EXTS
+        and f.is_file()
+        and not _is_under_originals(f)
     )
     logger.info(f"Found {len(files)} files in {scan_dir}")
 

@@ -16,7 +16,7 @@ from watchdog.events import FileSystemEvent, FileSystemEventHandler
 from watchdog.observers import Observer
 
 from app.config import settings
-from app.services.document_service import register_file
+from app.services.document_service import _is_under_originals, register_file
 
 logger = logging.getLogger(__name__)
 
@@ -54,6 +54,8 @@ class DocumentEventHandler(FileSystemEventHandler):
         """같은 파일에 대한 이벤트를 DEBOUNCE_SECONDS 동안 모아서 한 번만 처리."""
         file_path = Path(path)
         if file_path.suffix.lower() not in SUPPORTED_EXTS:
+            return
+        if _is_under_originals(file_path):
             return
 
         with self._lock:

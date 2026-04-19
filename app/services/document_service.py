@@ -21,6 +21,19 @@ def _compute_file_hash(file_path: Path) -> str:
     return sha256.hexdigest()
 
 
+def _is_under_originals(path: Path) -> bool:
+    """``documents_originals_root`` 하위 경로 여부. 스캔/감시 대상에서 제외하기 위함."""
+    try:
+        abs_path = path.resolve()
+        originals = settings.documents_originals_root.resolve()
+    except (OSError, RuntimeError):
+        return False
+    try:
+        return abs_path.is_relative_to(originals)
+    except ValueError:
+        return False
+
+
 def _detect_mime_type(file_path: Path) -> str:
     ext = file_path.suffix.lower()
     mime_map = {
@@ -193,6 +206,9 @@ async def scan_document_folder(db: AsyncSession) -> dict:
         if file_path.suffix.lower() not in supported_exts:
             continue
         if not file_path.is_file():
+            continue
+        if _is_under_originals(file_path):
+            # 보존된 원본은 재등록/재파싱 대상이 아님
             continue
 
         scanned += 1
